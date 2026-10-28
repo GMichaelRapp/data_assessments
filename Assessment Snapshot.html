@@ -1,0 +1,950 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Assessment Snapshot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Zilla+Slab:wght@500;600;700&display=swap">
+<style>
+/* Layout: classroom ledger. Toolbar, filter strip, KPI row, two charts, standards table, assessment log. */
+:root {
+  --bg: #F4F6F9;
+  --surface: #FFFFFF;
+  --surface-2: #EEF1F6;
+  --ink: #1B2230;
+  --muted: #5A6476;
+  --line: #DBE0E8;
+  --accent: #2346A8;
+  --accent-ink: #FFFFFF;
+  --m: #2E8B6E;
+  --nm: #D29A2E;
+  --r: #C2523C;
+  --abs: #9AA3B2;
+  --warn-bg: #FFF4DD;
+  --warn-ink: #7A5200;
+  --ok-bg: #E5F4EE;
+  --ok-ink: #1F6450;
+  --font-display: "Zilla Slab", "Rockwell", "Roboto Slab", Georgia, serif;
+  --font-body: "Public Sans", "Segoe UI", system-ui, -apple-system, Helvetica, Arial, sans-serif;
+  --radius: 8px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11151C; --surface: #19202A; --surface-2: #212936; --ink: #E5E9F0; --muted: #9AA4B6;
+    --line: #2B3442; --accent: #8EA8FF; --accent-ink: #0E1630; --m: #4DB892; --nm: #E2B456; --r: #E27A64;
+    --abs: #6D7788; --warn-bg: #3A2F14; --warn-ink: #F2CF83; --ok-bg: #173229; --ok-ink: #8FD9BC;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11151C; --surface: #19202A; --surface-2: #212936; --ink: #E5E9F0; --muted: #9AA4B6;
+  --line: #2B3442; --accent: #8EA8FF; --accent-ink: #0E1630; --m: #4DB892; --nm: #E2B456; --r: #E27A64;
+  --abs: #6D7788; --warn-bg: #3A2F14; --warn-ink: #F2CF83; --ok-bg: #173229; --ok-ink: #8FD9BC;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--ink);
+  font: 15px/1.5 var(--font-body);
+  font-variant-numeric: tabular-nums;
+}
+.wrap {
+  max-width: 1180px; margin: 0 auto;
+  padding-block: 20px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 20px;
+}
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; letter-spacing: 0.005em; }
+h1 { font-size: 1.9rem; font-weight: 700; line-height: 1.15; }
+h2 { font-size: 1.2rem; font-weight: 600; }
+.eyebrow { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); font-weight: 600; }
+.muted { color: var(--muted); }
+button, input, select, textarea { font: inherit; color: inherit; }
+
+/* Header */
+.head { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between; }
+.head-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.composition { font-size: 0.88rem; color: var(--muted); }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn {
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem;
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.danger { color: var(--r); }
+.btn.small { padding: 4px 10px; font-size: 0.8rem; }
+.btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, .linkbtn:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+.linkbtn { background: none; border: 0; padding: 0; color: var(--accent); cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+
+/* Status bar */
+.status { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; font-size: 0.82rem; color: var(--muted); }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-weight: 600; font-size: 0.78rem; }
+.pill.ok { background: var(--ok-bg); color: var(--ok-ink); }
+.pill.warn { background: var(--warn-bg); color: var(--warn-ink); }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+/* Filters */
+.filters {
+  display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;
+  padding: 12px 14px; background: var(--surface-2); border-radius: var(--radius);
+}
+.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.field label, .field .lbl { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; color: var(--muted); }
+.field select, .field input, .field textarea {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; min-width: 0;
+}
+.filters .field select { min-width: 140px; }
+
+/* KPIs */
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
+.kpi .val { font-family: var(--font-display); font-size: 2rem; font-weight: 700; line-height: 1.1; }
+.kpi .sub { font-size: 0.82rem; color: var(--muted); }
+.meter { display: flex; height: 6px; border-radius: 3px; overflow: hidden; background: var(--surface-2); margin-top: 4px; }
+.meter span { display: block; height: 100%; }
+
+/* Panels */
+.grid2 { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.panel-head { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: baseline; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 0.8rem; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.chart-wrap { position: relative; width: 100%; }
+.chart-wrap canvas { display: block; width: 100%; }
+.tip {
+  position: absolute; pointer-events: none; z-index: 5; background: var(--ink); color: var(--bg);
+  font-size: 0.8rem; line-height: 1.4; padding: 8px 10px; border-radius: 6px; max-width: 240px;
+}
+.empty { padding: 32px 12px; text-align: center; color: var(--muted); }
+
+/* Tables */
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+th { text-align: left; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; padding: 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 9px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+td.num, th.num { text-align: right; }
+tr:last-child td { border-bottom: 0; }
+.std { font-weight: 600; white-space: nowrap; }
+.bar-inline { display: flex; height: 8px; width: 100%; min-width: 80px; border-radius: 4px; overflow: hidden; background: var(--surface-2); }
+.bar-inline span { height: 100%; }
+.notes-cell { min-width: 220px; max-width: 360px; color: var(--muted); }
+.flag { display: inline-block; margin-top: 4px; font-size: 0.75rem; padding: 1px 8px; border-radius: 999px; background: var(--warn-bg); color: var(--warn-ink); font-weight: 600; }
+.rowactions { display: flex; gap: 6px; white-space: nowrap; }
+.mpct { font-weight: 700; }
+
+/* Entry form */
+.entry { border: 1px solid var(--accent); }
+.entry-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.entry-grid .wide { grid-column: span 2; }
+.entry-grid .full { grid-column: 1 / -1; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { border: 0; background: var(--surface); padding: 6px 12px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.check-line { font-size: 0.85rem; }
+.ferpa { font-size: 0.82rem; color: var(--muted); border-left: 3px solid var(--accent); padding-left: 10px; }
+.form-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+/* Import dialog */
+.dialog { background: var(--surface); border: 1px solid var(--accent); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+
+/* Toast */
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 20;
+  background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 8px; font-size: 0.88rem;
+  max-width: min(560px, calc(100vw - 32px)); box-shadow: 0 6px 24px rgba(0,0,0,0.2);
+}
+
+@media (max-width: 900px) {
+  .grid2 { grid-template-columns: minmax(0, 1fr); }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .entry-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  .entry-grid { grid-template-columns: minmax(0, 1fr); }
+  .entry-grid .wide { grid-column: auto; }
+  h1 { font-size: 1.55rem; }
+}
+
+/* Print fallback (used only if the PDF library can't load) */
+@media print {
+  :root { --bg:#fff; --surface:#fff; --surface-2:#f1f3f6; --ink:#111; --muted:#444; --line:#ccc; color-scheme: light; }
+  .actions, .filters, .status, .rowactions, .entry, .dialog, .toast, .no-print { display: none !important; }
+  .panel, .kpi { break-inside: avoid; }
+  .grid2 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- Saved data lives here. "Save dashboard" writes a new copy of this file with your current data inside. -->
+<script type="application/json" id="dashboard-data">{"id":"eng4-p2-2026","updatedAt":"2026-10-28T14:30:00.000Z","records":[{"id":"r1","course":"ENG IV","period":"2nd Period","date":"2026-08-14","classSize":21,"standards":"RL11-12.1","mode":"count","m":17,"nm":0,"r":0,"absent":4,"iep":6,"gifted":0,"ell":0,"notes":"Students did incredible work on this assessment. They used their resource, took their time, and they worked through some tough language to answer the assessment questions."},{"id":"r2","course":"ENG IV","period":"2nd Period","date":"2026-08-17","classSize":24,"standards":"RL11-12.1","mode":"count","m":17,"nm":0,"r":1,"absent":6,"iep":6,"gifted":0,"ell":0,"notes":"Students took their time, asked questions about language (as needed), and al answered the question correctly. Six were missing today, and one new student answered the question but didn't successfully identify the correct response."},{"id":"r3","course":"ENG IV","period":"2nd Period","date":"2026-08-18","classSize":24,"standards":"RL11-12.1","mode":"count","m":14,"nm":0,"r":2,"absent":8,"iep":6,"gifted":0,"ell":0,"notes":"Students took their time, read the question carefully, and chose their answers carefully."},{"id":"r4","course":"ENG IV","period":"2nd Period","date":"2026-08-19","classSize":24,"standards":"RL11-12.1","mode":"count","m":19,"nm":0,"r":0,"absent":6,"iep":6,"gifted":0,"ell":0,"notes":"All students who were present successfully completed the exit ticket, reading and answering carefully."},{"id":"r5","course":"ENG IV","period":"2nd Period","date":"2026-08-20","classSize":24,"standards":"RL11-12.6","mode":"count","m":16,"nm":0,"r":2,"absent":7,"iep":6,"gifted":0,"ell":0,"notes":"Most students completed the assessment/exit ticket. Almost all students successfully answered the exit ticket's question, using their knowledge and skills to do so."},{"id":"r6","course":"ENG IV","period":"2nd Period","date":"2026-08-28","classSize":25,"standards":"RI.3","mode":"pct","m":75,"nm":20,"r":5,"absent":1,"iep":8,"gifted":0,"ell":1,"notes":"Students struggled, collectively, with writing a claim that can be supported with relevant, concrete evidence."}]}</script>
+
+<div class="wrap" id="app">
+
+  <header class="head">
+    <div class="head-text">
+      <span class="eyebrow">Assessment Snapshot</span>
+      <h1 id="dash-title">ENG IV · 2nd Period</h1>
+      <span class="composition" id="composition"></span>
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="btn-add" type="button">+ Add assessment</button>
+      <button class="btn" id="btn-import" type="button">Import CSV</button>
+      <button class="btn" id="btn-export" type="button">Export CSV</button>
+      <button class="btn" id="btn-save" type="button">Save dashboard</button>
+      <button class="btn" id="btn-pdf" type="button">Download PDF</button>
+      <input type="file" id="file-csv" accept=".csv,text/csv" hidden>
+    </div>
+  </header>
+
+  <div class="status" id="status">
+    <span class="pill ok" id="pill-browser"><span class="dot"></span>Saved in this browser</span>
+    <span class="pill warn" id="pill-file" hidden><span class="dot"></span>Changes not yet in a saved file</span>
+    <span id="restore-note" hidden></span>
+    <button class="linkbtn" id="btn-clear" type="button">Clear all data</button>
+    <span id="clear-confirm" hidden>Delete every assessment in this dashboard?
+      <button class="btn small danger" id="btn-clear-yes" type="button">Delete all</button>
+      <button class="btn small" id="btn-clear-no" type="button">Cancel</button>
+    </span>
+  </div>
+
+  <!-- Import dialog -->
+  <section class="dialog" id="import-dialog" hidden aria-live="polite">
+    <h2>Import <span id="import-name"></span></h2>
+    <p id="import-summary" class="muted" style="margin:0"></p>
+    <div class="form-actions">
+      <button class="btn primary" id="btn-import-append" type="button">Add to current data</button>
+      <button class="btn" id="btn-import-replace" type="button">Replace current data</button>
+      <button class="btn" id="btn-import-cancel" type="button">Cancel</button>
+    </div>
+  </section>
+
+  <!-- Entry form -->
+  <section class="panel entry" id="entry" hidden>
+    <div class="panel-head">
+      <h2 id="entry-title">Add assessment</h2>
+      <div class="seg" role="group" aria-label="Enter results as">
+        <button type="button" id="mode-count" aria-pressed="true">Student counts</button>
+        <button type="button" id="mode-pct" aria-pressed="false">Percentages</button>
+      </div>
+    </div>
+    <p class="ferpa" style="margin:0">Enter class-level totals only. Leave student names, IDs, and individual details out of the notes.</p>
+    <form id="entry-form" novalidate>
+      <div class="entry-grid">
+        <div class="field"><label for="f-course">Course</label><input id="f-course" list="dl-course" required></div>
+        <div class="field"><label for="f-period">Period</label><input id="f-period" list="dl-period" required></div>
+        <div class="field"><label for="f-date">Date of assessment</label><input id="f-date" type="date" required></div>
+        <div class="field"><label for="f-standards">Standard(s)</label><input id="f-standards" list="dl-std" placeholder="RL11-12.1; RL11-12.2" required></div>
+
+        <div class="field"><label for="f-size">Class size</label><input id="f-size" type="number" min="0" step="1" inputmode="numeric"></div>
+        <div class="field"><label for="f-absent">Absent (A)</label><input id="f-absent" type="number" min="0" step="1" inputmode="numeric"></div>
+        <div class="field"><label for="f-m" id="lbl-m">Mastery (M)</label><input id="f-m" type="number" min="0" step="any" inputmode="decimal"></div>
+        <div class="field"><label for="f-nm" id="lbl-nm">Near Mastery (NM)</label><input id="f-nm" type="number" min="0" step="any" inputmode="decimal"></div>
+
+        <div class="field"><label for="f-r" id="lbl-r">Remediation (R)</label><input id="f-r" type="number" min="0" step="any" inputmode="decimal"></div>
+        <div class="field"><label for="f-iep">IEPs</label><input id="f-iep" type="number" min="0" step="1" inputmode="numeric"></div>
+        <div class="field"><label for="f-gifted">Gifted</label><input id="f-gifted" type="number" min="0" step="1" inputmode="numeric"></div>
+        <div class="field"><label for="f-ell">ELLs</label><input id="f-ell" type="number" min="0" step="1" inputmode="numeric"></div>
+
+        <div class="field full"><label for="f-notes">Assessment notes</label><textarea id="f-notes" rows="3"></textarea></div>
+      </div>
+      <p class="check-line" id="entry-check" aria-live="polite"></p>
+      <div class="form-actions">
+        <button class="btn primary" type="submit" id="btn-entry-save">Save assessment</button>
+        <button class="btn" type="button" id="btn-entry-cancel">Cancel</button>
+        <span class="muted" id="entry-error" role="alert"></span>
+      </div>
+    </form>
+    <datalist id="dl-course"></datalist><datalist id="dl-period"></datalist><datalist id="dl-std"></datalist>
+  </section>
+
+  <!-- Filters -->
+  <section class="filters" aria-label="Filters">
+    <div class="field"><label for="flt-course">Course</label><select id="flt-course"></select></div>
+    <div class="field"><label for="flt-period">Period</label><select id="flt-period"></select></div>
+    <div class="field"><label for="flt-std">Standard</label><select id="flt-std"></select></div>
+    <div class="field"><label for="flt-from">From</label><input type="date" id="flt-from"></div>
+    <div class="field"><label for="flt-to">To</label><input type="date" id="flt-to"></div>
+    <button class="linkbtn" id="btn-reset-filters" type="button" style="margin-bottom:8px">Reset filters</button>
+  </section>
+
+  <!-- KPIs -->
+  <section class="kpis" id="kpis" aria-label="Summary"></section>
+
+  <!-- Charts -->
+  <div class="grid2">
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Results by assessment</h2>
+        <div class="legend"><span><i style="background:var(--m)"></i>Mastery</span><span><i style="background:var(--nm)"></i>Near mastery</span><span><i style="background:var(--r)"></i>Remediation</span></div>
+      </div>
+      <p class="muted" style="margin:0;font-size:0.82rem">Share of students assessed. Absent students are counted under each bar.</p>
+      <div class="chart-wrap" id="wrap-trend"><canvas id="chart-trend" height="300" aria-label="Results by assessment chart" role="img"></canvas><div class="tip" id="tip-trend" hidden></div></div>
+    </section>
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Results by standard</h2>
+      </div>
+      <p class="muted" style="margin:0;font-size:0.82rem">All students assessed on each standard, combined across assessments.</p>
+      <div class="chart-wrap" id="wrap-std"><canvas id="chart-std" height="300" aria-label="Results by standard chart" role="img"></canvas><div class="tip" id="tip-std" hidden></div></div>
+    </section>
+  </div>
+
+  <!-- Log -->
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Assessment log</h2>
+      <span class="muted" id="log-count" style="font-size:0.85rem"></span>
+    </div>
+    <div class="table-scroll">
+      <table id="log">
+        <thead><tr>
+          <th>Date</th><th>Standard(s)</th><th class="num">Class</th><th class="num">Absent</th>
+          <th class="num">M</th><th class="num">NM</th><th class="num">R</th><th>Mastery</th>
+          <th class="num">IEP</th><th class="num">Gifted</th><th class="num">ELL</th><th>Notes</th><th class="no-print"><span hidden>Actions</span></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="muted" style="font-size:0.78rem">
+    Mastery rates use students assessed (class size minus absent). Rows entered as percentages are converted to estimated counts for combined totals. All data stays on this computer.
+  </footer>
+</div>
+
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  // Capture a clean copy of this file before anything renders, for "Save dashboard".
+  const TEMPLATE = "<!doctype html>\n" + document.documentElement.outerHTML;
+  const DATA_OPEN = '<script type="application/json" id="dashboard-' + 'data">';
+  const DATA_CLOSE = "</" + "script>";
+
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const uid = () => "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const fmtDate = (iso) => { if (!iso) return ""; const [y, m, d] = iso.split("-").map(Number); return MONTHS[m - 1] + " " + d + ", " + y; };
+  const fmtShort = (iso) => { if (!iso) return ""; const [, m, d] = iso.split("-").map(Number); return MONTHS[m - 1] + " " + d; };
+  const pct = (x) => (isFinite(x) ? Math.round(x * 100) + "%" : "–");
+  const n = (v) => { const x = parseFloat(v); return isFinite(x) ? x : 0; };
+
+  // ---------- State ----------
+  let state = { id: "dash-" + Date.now().toString(36), updatedAt: new Date().toISOString(), records: [] };
+  let fileDirty = false;
+  let editingId = null;
+  let entryMode = "count";
+  let pendingImport = null;
+
+  function loadInitial() {
+    let embedded = null;
+    try { embedded = JSON.parse($("#dashboard-data").textContent); } catch (e) {}
+    if (embedded && Array.isArray(embedded.records)) state = embedded;
+    let local = null;
+    try { local = JSON.parse(localStorage.getItem("assessment-snapshot:" + state.id) || "null"); } catch (e) {}
+    if (local && Array.isArray(local.records) && local.updatedAt > state.updatedAt) {
+      state = local;
+      fileDirty = true;
+      const note = $("#restore-note");
+      note.textContent = "Restored changes made in this browser on " + new Date(local.updatedAt).toLocaleString() + ".";
+      note.hidden = false;
+    }
+  }
+
+  function persist() {
+    state.updatedAt = new Date().toISOString();
+    fileDirty = true;
+    let ok = true;
+    try { localStorage.setItem("assessment-snapshot:" + state.id, JSON.stringify(state)); } catch (e) { ok = false; }
+    const p = $("#pill-browser");
+    p.className = "pill " + (ok ? "ok" : "warn");
+    p.innerHTML = '<span class="dot"></span>' + (ok ? "Saved in this browser · " + new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "Browser storage unavailable. Use Save dashboard to keep changes");
+    $("#pill-file").hidden = !fileDirty;
+    render();
+  }
+
+  // ---------- Derived numbers ----------
+  function derive(r) {
+    const size = n(r.classSize), absent = n(r.absent);
+    const present = Math.max(size - absent, 0);
+    let m, nm, rr, flags = [];
+    if (r.mode === "pct") {
+      const sum = n(r.m) + n(r.nm) + n(r.r);
+      const base = sum > 0 ? sum : 100;
+      const fm = n(r.m) / base, fnm = n(r.nm) / base, fr = n(r.r) / base;
+      m = fm * present; nm = fnm * present; rr = fr * present;
+      if (sum > 0 && Math.abs(sum - 100) > 1) flags.push("Percentages add to " + Math.round(sum) + "%");
+      return { size, absent, present, assessed: present, m, nm, r: rr, fm, fnm, fr, est: true, flags };
+    }
+    m = n(r.m); nm = n(r.nm); rr = n(r.r);
+    const assessed = m + nm + rr;
+    if (size && assessed + absent !== size) flags.push("M+NM+R+A = " + (assessed + absent) + ", class size " + size);
+    return { size, absent, present, assessed, m, nm, r: rr, fm: assessed ? m / assessed : NaN, fnm: assessed ? nm / assessed : NaN, fr: assessed ? rr / assessed : NaN, est: false, flags };
+  }
+
+  const splitStd = (s) => String(s || "").split(/[;,/|]+/).map((x) => x.trim()).filter(Boolean);
+  const sorted = (recs) => recs.slice().sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+
+  // ---------- Filters ----------
+  function uniq(key) { return [...new Set(state.records.map((r) => r[key]).filter(Boolean))].sort(); }
+  function allStds() { return [...new Set(state.records.flatMap((r) => splitStd(r.standards)))].sort(); }
+  function fillSelect(sel, vals, label) {
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">All ' + label + "</option>" + vals.map((v) => '<option value="' + esc(v) + '">' + esc(v) + "</option>").join("");
+    sel.value = vals.includes(cur) ? cur : "";
+  }
+  function refreshFilterOptions() {
+    fillSelect($("#flt-course"), uniq("course"), "courses");
+    fillSelect($("#flt-period"), uniq("period"), "periods");
+    fillSelect($("#flt-std"), allStds(), "standards");
+    $("#dl-course").innerHTML = uniq("course").map((v) => '<option value="' + esc(v) + '">').join("");
+    $("#dl-period").innerHTML = uniq("period").map((v) => '<option value="' + esc(v) + '">').join("");
+    $("#dl-std").innerHTML = allStds().map((v) => '<option value="' + esc(v) + '">').join("");
+  }
+  function filtered() {
+    const c = $("#flt-course").value, p = $("#flt-period").value, s = $("#flt-std").value;
+    const from = $("#flt-from").value, to = $("#flt-to").value;
+    return sorted(state.records.filter((r) =>
+      (!c || r.course === c) && (!p || r.period === p) && (!s || splitStd(r.standards).includes(s)) &&
+      (!from || r.date >= from) && (!to || r.date <= to)));
+  }
+  function filterLabel() {
+    const parts = [];
+    const c = $("#flt-course").value, p = $("#flt-period").value, s = $("#flt-std").value;
+    const from = $("#flt-from").value, to = $("#flt-to").value;
+    if (c) parts.push(c); if (p) parts.push(p); if (s) parts.push("Standard " + s);
+    if (from || to) parts.push((from ? fmtDate(from) : "start") + " to " + (to ? fmtDate(to) : "latest"));
+    return parts.length ? parts.join(" · ") : "All assessments";
+  }
+  function titleFor(recs) {
+    const courses = [...new Set(recs.map((r) => r.course).filter(Boolean))];
+    const periods = [...new Set(recs.map((r) => r.period).filter(Boolean))];
+    if (!recs.length) return "No assessments yet";
+    const c = courses.length === 1 ? courses[0] : courses.length + " courses";
+    const p = periods.length === 1 ? periods[0] : periods.length + " periods";
+    return c + " · " + p;
+  }
+
+  // ---------- Aggregates ----------
+  function totals(recs) {
+    let m = 0, nm = 0, r = 0, assessed = 0, size = 0, absent = 0, flags = 0;
+    recs.forEach((rec) => { const d = derive(rec); m += d.m; nm += d.nm; r += d.r; assessed += d.m + d.nm + d.r; size += d.size; absent += d.absent; if (d.flags.length) flags++; });
+    return { m, nm, r, assessed, size, absent, flags, fm: assessed ? m / assessed : NaN, fnm: assessed ? nm / assessed : NaN, fr: assessed ? r / assessed : NaN, attend: size ? (size - absent) / size : NaN };
+  }
+  function byStandard(recs) {
+    const map = new Map();
+    recs.forEach((rec) => {
+      const d = derive(rec);
+      splitStd(rec.standards).forEach((s) => {
+        const o = map.get(s) || { std: s, m: 0, nm: 0, r: 0, count: 0, last: "" };
+        o.m += d.m; o.nm += d.nm; o.r += d.r; o.count++; if (rec.date > o.last) o.last = rec.date;
+        map.set(s, o);
+      });
+    });
+    return [...map.values()].map((o) => { const a = o.m + o.nm + o.r; return { ...o, assessed: a, fm: a ? o.m / a : NaN, fnm: a ? o.nm / a : NaN, fr: a ? o.r / a : NaN }; })
+      .sort((a, b) => a.std.localeCompare(b.std, undefined, { numeric: true }));
+  }
+
+  // ---------- Rendering ----------
+  function colors() {
+    const cs = getComputedStyle(document.documentElement);
+    const g = (v) => cs.getPropertyValue(v).trim();
+    return { m: g("--m"), nm: g("--nm"), r: g("--r"), ink: g("--ink"), muted: g("--muted"), line: g("--line"), bg: g("--surface-2"), warn: g("--warn-ink"), font: "Public Sans, Segoe UI, system-ui, sans-serif" };
+  }
+  const PRINT_COLORS = { m: "#2E8B6E", nm: "#D29A2E", r: "#C2523C", ink: "#1B2230", muted: "#5A6476", line: "#DBE0E8", bg: "#EEF1F6", warn: "#7A5200", font: "Helvetica, Arial, sans-serif" };
+
+  function render() {
+    refreshFilterOptions();
+    const recs = filtered();
+    $("#dash-title").textContent = titleFor(recs.length ? recs : state.records);
+    document.title = "Assessment Snapshot";
+
+    const latest = recs[recs.length - 1];
+    $("#composition").textContent = latest
+      ? "Latest roster (" + fmtShort(latest.date) + "): " + n(latest.classSize) + " students · " + n(latest.iep) + " IEP · " + n(latest.gifted) + " gifted · " + n(latest.ell) + " ELL"
+      : "Add an assessment or import a CSV to begin.";
+
+    renderKpis(recs);
+    renderLog(recs);
+    drawAll();
+  }
+
+  function renderKpis(recs) {
+    const t = totals(recs);
+    const stds = byStandard(recs);
+    const first = recs[0], last = recs[recs.length - 1];
+    const low = stds.filter((s) => isFinite(s.fm)).sort((a, b) => a.fm - b.fm)[0];
+    const meter = (a, b, c) => '<div class="meter"><span style="width:' + (a * 100 || 0) + '%;background:var(--m)"></span><span style="width:' + (b * 100 || 0) + '%;background:var(--nm)"></span><span style="width:' + (c * 100 || 0) + '%;background:var(--r)"></span></div>';
+    $("#kpis").innerHTML = [
+      '<div class="kpi"><span class="eyebrow">Mastery rate</span><span class="val">' + pct(t.fm) + '</span>' + meter(t.fm, t.fnm, t.fr) +
+        '<span class="sub">' + Math.round(t.m) + " of " + Math.round(t.assessed) + " students assessed</span></div>",
+      '<div class="kpi"><span class="eyebrow">Near mastery / remediation</span><span class="val">' + pct(t.fnm) + " / " + pct(t.fr) + '</span><span class="sub">' + Math.round(t.nm) + " near mastery · " + Math.round(t.r) + " remediation</span></div>",
+      '<div class="kpi"><span class="eyebrow">Present on assessment days</span><span class="val">' + pct(t.attend) + '</span><span class="sub">' + t.absent + " absences across " + recs.length + " assessment" + (recs.length === 1 ? "" : "s") + "</span></div>",
+      '<div class="kpi"><span class="eyebrow">Standards assessed</span><span class="val">' + stds.length + '</span><span class="sub">' +
+        (recs.length ? fmtShort(first.date) + " to " + fmtShort(last.date) + (low && stds.length > 1 ? " · lowest: " + esc(low.std) + " (" + pct(low.fm) + ")" : "") : "No assessments in view") + "</span></div>"
+    ].join("");
+  }
+
+  function renderLog(recs) {
+    const rows = recs.slice().reverse();
+    $("#log-count").textContent = rows.length + " of " + state.records.length + " assessments shown" + (totals(recs).flags ? " · " + totals(recs).flags + " need a data check" : "");
+    const tb = $("#log tbody");
+    if (!rows.length) { tb.innerHTML = '<tr><td colspan="13" class="empty">No assessments match these filters.</td></tr>'; return; }
+    tb.innerHTML = rows.map((r) => {
+      const d = derive(r);
+      const cell = (raw, cnt) => r.mode === "pct" ? esc(n(raw)) + "%" : esc(cnt);
+      const bar = '<div class="bar-inline" title="M ' + pct(d.fm) + " · NM " + pct(d.fnm) + " · R " + pct(d.fr) + '"><span style="width:' + (d.fm * 100 || 0) + '%;background:var(--m)"></span><span style="width:' + (d.fnm * 100 || 0) + '%;background:var(--nm)"></span><span style="width:' + (d.fr * 100 || 0) + '%;background:var(--r)"></span></div>';
+      return "<tr>" +
+        '<td style="white-space:nowrap">' + esc(fmtDate(r.date)) + '<div class="muted" style="font-size:0.75rem">' + esc(r.course) + " · " + esc(r.period) + "</div></td>" +
+        '<td class="std">' + esc(r.standards) + "</td>" +
+        '<td class="num">' + esc(d.size) + '</td><td class="num">' + esc(d.absent) + "</td>" +
+        '<td class="num">' + cell(r.m, d.m) + '</td><td class="num">' + cell(r.nm, d.nm) + '</td><td class="num">' + cell(r.r, d.r) + "</td>" +
+        '<td><span class="mpct">' + pct(d.fm) + "</span>" + bar + "</td>" +
+        '<td class="num">' + esc(n(r.iep)) + '</td><td class="num">' + esc(n(r.gifted)) + '</td><td class="num">' + esc(n(r.ell)) + "</td>" +
+        '<td class="notes-cell">' + esc(r.notes) + (d.flags.length ? '<div><span class="flag">Check: ' + esc(d.flags.join("; ")) + "</span></div>" : "") + "</td>" +
+        '<td class="no-print"><div class="rowactions" data-id="' + esc(r.id) + '"><button class="btn small" data-act="edit" type="button">Edit</button><button class="btn small danger" data-act="del" type="button">Delete</button></div></td>' +
+        "</tr>";
+    }).join("");
+  }
+
+  // ---------- Charts (canvas, so they also drop cleanly into the PDF) ----------
+  function setupCanvas(canvas, cssW, cssH, scale) {
+    canvas.width = Math.round(cssW * scale); canvas.height = Math.round(cssH * scale);
+    canvas.style.height = cssH + "px";
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(scale, 0, 0, scale, 0, 0);
+    ctx.clearRect(0, 0, cssW, cssH);
+    return ctx;
+  }
+
+  function drawTrend(canvas, recs, C, W, H, scale) {
+    const ctx = setupCanvas(canvas, W, H, scale);
+    const hits = [];
+    const pad = { l: 40, r: 8, t: 10, b: 48 };
+    const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+    ctx.font = "11px " + C.font; ctx.textBaseline = "middle";
+    [0, 0.25, 0.5, 0.75, 1].forEach((v) => {
+      const y = pad.t + ph * (1 - v);
+      ctx.strokeStyle = C.line; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(pad.l, y + 0.5); ctx.lineTo(W - pad.r, y + 0.5); ctx.stroke();
+      ctx.fillStyle = C.muted; ctx.textAlign = "right"; ctx.fillText(Math.round(v * 100) + "%", pad.l - 6, y);
+    });
+    if (!recs.length) { ctx.textAlign = "center"; ctx.fillStyle = C.muted; ctx.font = "13px " + C.font; ctx.fillText("No assessments in view", W / 2, H / 2); return hits; }
+    const slot = pw / recs.length;
+    const bw = Math.max(4, Math.min(44, slot * 0.62));
+    const every = Math.max(1, Math.ceil(52 / slot));
+    recs.forEach((r, i) => {
+      const d = derive(r);
+      const x = pad.l + slot * i + (slot - bw) / 2;
+      let y = pad.t + ph;
+      [[d.fm, C.m], [d.fnm, C.nm], [d.fr, C.r]].forEach(([f, col]) => {
+        const h = (f || 0) * ph; if (h <= 0) return;
+        ctx.fillStyle = col; ctx.fillRect(x, y - h, bw, h); y -= h;
+      });
+      if (!isFinite(d.fm)) { ctx.strokeStyle = C.muted; ctx.setLineDash([3, 3]); ctx.strokeRect(x + 0.5, pad.t + 0.5, bw - 1, ph - 1); ctx.setLineDash([]); }
+      if (d.fm > 0.12 && bw >= 26) { ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.font = "600 10px " + C.font; ctx.fillText(Math.round(d.fm * 100), x + bw / 2, pad.t + ph - d.fm * ph / 2); }
+      if (d.flags.length) { ctx.fillStyle = C.warn; ctx.textAlign = "center"; ctx.font = "700 11px " + C.font; ctx.fillText("!", x + bw / 2, pad.t + ph - (d.fm + d.fnm + d.fr) * ph - 7 > pad.t ? pad.t + ph - (d.fm + d.fnm + d.fr) * ph - 7 : pad.t + 6); }
+      if (i % every === 0) {
+        ctx.textAlign = "center"; ctx.fillStyle = C.ink; ctx.font = "600 10.5px " + C.font;
+        ctx.fillText(fmtShort(r.date), x + bw / 2, pad.t + ph + 13);
+        ctx.fillStyle = C.muted; ctx.font = "10px " + C.font;
+        const s = String(r.standards || ""); ctx.fillText(s.length > 11 ? s.slice(0, 10) + "…" : s, x + bw / 2, pad.t + ph + 26);
+        ctx.fillText("A " + d.absent, x + bw / 2, pad.t + ph + 39);
+      }
+      hits.push({ x0: pad.l + slot * i, x1: pad.l + slot * (i + 1), r, d });
+    });
+    return hits;
+  }
+
+  function drawStd(canvas, stds, C, W, H, scale) {
+    const ctx = setupCanvas(canvas, W, H, scale);
+    const hits = [];
+    ctx.font = "11px " + C.font; ctx.textBaseline = "middle";
+    if (!stds.length) { ctx.textAlign = "center"; ctx.fillStyle = C.muted; ctx.font = "13px " + C.font; ctx.fillText("No standards in view", W / 2, H / 2); return hits; }
+    ctx.font = "600 11.5px " + C.font;
+    const labelW = Math.min(110, Math.max(...stds.map((s) => ctx.measureText(s.std).width)) + 10);
+    const pad = { l: labelW, r: 44, t: 6, b: 22 };
+    const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+    const slot = ph / stds.length;
+    const bh = Math.max(6, Math.min(28, slot * 0.6));
+    ctx.font = "10px " + C.font;
+    [0, 0.5, 1].forEach((v) => {
+      const x = pad.l + pw * v;
+      ctx.strokeStyle = C.line; ctx.beginPath(); ctx.moveTo(x + 0.5, pad.t); ctx.lineTo(x + 0.5, pad.t + ph); ctx.stroke();
+      ctx.fillStyle = C.muted; ctx.textAlign = "center"; ctx.fillText(Math.round(v * 100) + "%", x, H - 8);
+    });
+    stds.forEach((s, i) => {
+      const y = pad.t + slot * i + (slot - bh) / 2;
+      let x = pad.l;
+      [[s.fm, C.m], [s.fnm, C.nm], [s.fr, C.r]].forEach(([f, col]) => { const w = (f || 0) * pw; if (w <= 0) return; ctx.fillStyle = col; ctx.fillRect(x, y, w, bh); x += w; });
+      ctx.fillStyle = C.ink; ctx.textAlign = "right"; ctx.font = "600 11.5px " + C.font;
+      ctx.fillText(s.std.length > 14 ? s.std.slice(0, 13) + "…" : s.std, pad.l - 8, y + bh / 2);
+      ctx.textAlign = "left"; ctx.font = "700 11px " + C.font; ctx.fillText(pct(s.fm), pad.l + pw + 6, y + bh / 2 - (bh > 16 ? 6 : 0));
+      if (bh > 16) { ctx.font = "10px " + C.font; ctx.fillStyle = C.muted; ctx.fillText(s.count + "×", pad.l + pw + 6, y + bh / 2 + 7); }
+      hits.push({ y0: pad.t + slot * i, y1: pad.t + slot * (i + 1), s });
+    });
+    return hits;
+  }
+
+  let trendHits = [], stdHits = [];
+  function drawAll() {
+    const recs = filtered();
+    const C = colors();
+    const dpr = window.devicePixelRatio || 1;
+    const ct = $("#chart-trend"), cs = $("#chart-std");
+    const stds = byStandard(recs);
+    trendHits = drawTrend(ct, recs, C, ct.parentElement.clientWidth, 300, dpr);
+    const stdH = Math.max(160, Math.min(420, stds.length * 44 + 30));
+    stdHits = drawStd(cs, stds, C, cs.parentElement.clientWidth, stdH, dpr);
+  }
+
+  function bindTip(canvas, tip, find) {
+    canvas.addEventListener("mousemove", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left, y = e.clientY - rect.top;
+      const html = find(x, y);
+      if (!html) { tip.hidden = true; return; }
+      tip.innerHTML = html; tip.hidden = false;
+      const tw = tip.offsetWidth;
+      tip.style.left = Math.min(Math.max(0, x + 12), rect.width - tw) + "px";
+      tip.style.top = Math.max(0, y - tip.offsetHeight - 10) + "px";
+    });
+    canvas.addEventListener("mouseleave", () => { tip.hidden = true; });
+  }
+  bindTip($("#chart-trend"), $("#tip-trend"), (x) => {
+    const h = trendHits.find((h) => x >= h.x0 && x < h.x1); if (!h) return "";
+    const { r, d } = h; const c = (v) => (d.est ? "≈" : "") + Math.round(v);
+    return "<strong>" + esc(fmtDate(r.date)) + "</strong> · " + esc(r.standards) + "<br>Mastery " + pct(d.fm) + " (" + c(d.m) + ")<br>Near mastery " + pct(d.fnm) + " (" + c(d.nm) + ")<br>Remediation " + pct(d.fr) + " (" + c(d.r) + ")<br>Absent " + d.absent + " of " + d.size +
+      (d.flags.length ? "<br><em>Check: " + esc(d.flags.join("; ")) + "</em>" : "");
+  });
+  bindTip($("#chart-std"), $("#tip-std"), (x, y) => {
+    const h = stdHits.find((h) => y >= h.y0 && y < h.y1); if (!h) return "";
+    const s = h.s;
+    return "<strong>" + esc(s.std) + "</strong><br>" + s.count + " assessment" + (s.count === 1 ? "" : "s") + ", " + Math.round(s.assessed) + " students assessed<br>Mastery " + pct(s.fm) + " · NM " + pct(s.fnm) + " · R " + pct(s.fr) + "<br>Last assessed " + esc(fmtDate(s.last));
+  });
+
+  // ---------- Toast ----------
+  let toastTimer;
+  function toast(msg, ms) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.hidden = true), ms || 3500); }
+
+  // ---------- Entry form ----------
+  function setMode(mode) {
+    entryMode = mode;
+    $("#mode-count").setAttribute("aria-pressed", mode === "count");
+    $("#mode-pct").setAttribute("aria-pressed", mode === "pct");
+    const suf = mode === "pct" ? " %" : "";
+    $("#lbl-m").textContent = "Mastery (M)" + suf; $("#lbl-nm").textContent = "Near Mastery (NM)" + suf; $("#lbl-r").textContent = "Remediation (R)" + suf;
+    liveCheck();
+  }
+  const F = (id) => $("#f-" + id);
+  function openEntry(rec) {
+    editingId = rec ? rec.id : null;
+    $("#entry-title").textContent = rec ? "Edit assessment" : "Add assessment";
+    const last = sorted(state.records).slice(-1)[0] || {};
+    const src = rec || { course: $("#flt-course").value || last.course || "", period: $("#flt-period").value || last.period || "", date: new Date().toISOString().slice(0, 10), classSize: last.classSize ?? "", iep: last.iep ?? "", gifted: last.gifted ?? "", ell: last.ell ?? "", standards: "", m: "", nm: "", r: "", absent: "", notes: "", mode: "count" };
+    F("course").value = src.course || ""; F("period").value = src.period || ""; F("date").value = src.date || "";
+    F("standards").value = src.standards || ""; F("size").value = src.classSize ?? ""; F("absent").value = src.absent ?? "";
+    F("m").value = src.m ?? ""; F("nm").value = src.nm ?? ""; F("r").value = src.r ?? "";
+    F("iep").value = src.iep ?? ""; F("gifted").value = src.gifted ?? ""; F("ell").value = src.ell ?? ""; F("notes").value = src.notes || "";
+    $("#entry-error").textContent = "";
+    setMode(src.mode || "count");
+    $("#entry").hidden = false;
+    $("#entry").scrollIntoView({ behavior: "smooth", block: "start" });
+    F(rec ? "m" : "standards").focus({ preventScroll: true });
+  }
+  function formRecord() {
+    return { id: editingId || uid(), course: F("course").value.trim(), period: F("period").value.trim(), date: F("date").value, standards: F("standards").value.trim(),
+      classSize: n(F("size").value), absent: n(F("absent").value), mode: entryMode, m: n(F("m").value), nm: n(F("nm").value), r: n(F("r").value),
+      iep: n(F("iep").value), gifted: n(F("gifted").value), ell: n(F("ell").value), notes: F("notes").value.trim() };
+  }
+  function liveCheck() {
+    const r = formRecord(); const d = derive(r);
+    const line = $("#entry-check");
+    if (entryMode === "count") {
+      const total = d.assessed + d.absent;
+      line.innerHTML = "M + NM + R + Absent = <strong>" + total + "</strong>" + (r.classSize ? " of " + r.classSize + " enrolled" : "") +
+        (r.classSize && total !== r.classSize ? ' <span class="flag">Doesn\'t match class size</span>' : "") + (d.assessed ? " · Mastery " + pct(d.fm) : "");
+    } else {
+      const sum = n(r.m) + n(r.nm) + n(r.r);
+      line.innerHTML = "Percentages total <strong>" + Math.round(sum) + "%</strong>" + (sum && Math.abs(sum - 100) > 1 ? ' <span class="flag">Should total 100%</span>' : "") + " · Counts are estimated from the " + d.present + " students present.";
+    }
+  }
+  $("#entry-form").addEventListener("input", liveCheck);
+  $("#mode-count").addEventListener("click", () => setMode("count"));
+  $("#mode-pct").addEventListener("click", () => setMode("pct"));
+  $("#btn-add").addEventListener("click", () => openEntry(null));
+  $("#btn-entry-cancel").addEventListener("click", () => { $("#entry").hidden = true; editingId = null; });
+  $("#entry-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const r = formRecord();
+    const missing = [!r.course && "course", !r.period && "period", !r.date && "date", !r.standards && "standard"].filter(Boolean);
+    if (missing.length) { $("#entry-error").textContent = "Add a " + missing.join(", ") + " before saving."; return; }
+    const i = state.records.findIndex((x) => x.id === r.id);
+    if (i >= 0) state.records[i] = r; else state.records.push(r);
+    $("#entry").hidden = true; editingId = null;
+    persist();
+    toast(i >= 0 ? "Assessment updated" : "Assessment added");
+  });
+
+  // Row actions with an inline delete confirmation
+  $("#log tbody").addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    const box = b.closest(".rowactions"); const id = box.dataset.id;
+    const rec = state.records.find((r) => r.id === id);
+    if (b.dataset.act === "edit") openEntry(rec);
+    if (b.dataset.act === "del") {
+      box.innerHTML = '<button class="btn small danger" data-act="del-yes" type="button">Delete</button><button class="btn small" data-act="del-no" type="button">Keep</button>';
+    }
+    if (b.dataset.act === "del-yes") { state.records = state.records.filter((r) => r.id !== id); persist(); toast("Assessment deleted"); }
+    if (b.dataset.act === "del-no") render();
+  });
+
+  // ---------- CSV ----------
+  function parseCSV(text) {
+    const rows = []; let row = [], field = "", q = false;
+    text = text.replace(/^﻿/, "");
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (q) { if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else q = false; } else field += c; }
+      else if (c === '"') q = true;
+      else if (c === ",") { row.push(field); field = ""; }
+      else if (c === "\n" || c === "\r") { if (c === "\r" && text[i + 1] === "\n") i++; row.push(field); rows.push(row); row = []; field = ""; }
+      else field += c;
+    }
+    if (field !== "" || row.length) { row.push(field); rows.push(row); }
+    return rows.filter((r) => r.some((c) => c.trim() !== ""));
+  }
+  const COLS = [
+    ["near", (h) => h.includes("near")], ["remed", (h) => h.includes("remed")], ["absent", (h) => h.includes("absent")],
+    ["m", (h) => h.includes("mastery")], ["course", (h) => h.includes("course")], ["period", (h) => h.includes("period")],
+    ["date", (h) => h.includes("date")], ["size", (h) => h.includes("size") || h.includes("enroll")], ["std", (h) => h.includes("standard")],
+    ["iep", (h) => h.includes("iep")], ["gifted", (h) => h.includes("gift")], ["ell", (h) => h.includes("ell") || h.includes("esl")],
+    ["notes", (h) => h.includes("note") || h.includes("comment")]
+  ];
+  function mapHeaders(headers) {
+    const map = {}; const used = new Set();
+    COLS.forEach(([key, test]) => {
+      const i = headers.findIndex((h, idx) => !used.has(idx) && test(h.toLowerCase().replace(/[^a-z]/g, "")));
+      if (i >= 0) { map[key] = i; used.add(i); }
+    });
+    return map;
+  }
+  function parseDate(s) {
+    s = String(s || "").trim();
+    let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); if (m) return m[1] + "-" + m[2].padStart(2, "0") + "-" + m[3].padStart(2, "0");
+    m = s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/);
+    if (m) { let y = +m[3]; if (y < 100) y += 2000; return y + "-" + m[1].padStart(2, "0") + "-" + m[2].padStart(2, "0"); }
+    const d = new Date(s); return isNaN(d) ? "" : d.toISOString().slice(0, 10);
+  }
+  function readVal(s) { s = String(s ?? "").trim(); return { has: s.endsWith("%"), num: parseFloat(s.replace(/[%,\s]/g, "")) || 0 }; }
+  function rowToRecord(cells, map, stats) {
+    const g = (k) => (map[k] != null ? cells[map[k]] ?? "" : "");
+    const size = n(g("size")), absent = n(g("absent"));
+    const vals = [readVal(g("m")), readVal(g("near")), readVal(g("remed"))];
+    let mode = "count", m, nm, r;
+    if (vals.some((v) => v.has)) {
+      const asCounts = vals.map((v) => (v.has ? v.num / 100 : v.num));
+      const cSum = asCounts.reduce((a, b) => a + b, 0), pSum = vals.reduce((a, v) => a + v.num, 0);
+      const countsFit = Number.isInteger(cSum) && size && cSum + absent === size;
+      if (!countsFit && pSum >= 98 && pSum <= 102) { mode = "pct"; [m, nm, r] = vals.map((v) => v.num); stats.pct++; }
+      else { [m, nm, r] = asCounts.map((x) => Math.round(x * 100) / 100); if (vals.some((v) => v.has && v.num >= 100)) stats.converted++; }
+    } else { [m, nm, r] = vals.map((v) => v.num); }
+    return { id: uid(), course: g("course").trim(), period: g("period").trim(), date: parseDate(g("date")), classSize: size, standards: g("std").trim(),
+      mode, m, nm, r, absent, iep: n(g("iep")), gifted: n(g("gifted")), ell: n(g("ell")), notes: g("notes").trim() };
+  }
+  const sig = (r) => [r.course, r.period, r.date, r.standards, r.mode, r.m, r.nm, r.r, r.absent].join("|");
+
+  $("#btn-import").addEventListener("click", () => $("#file-csv").click());
+  $("#file-csv").addEventListener("change", async (e) => {
+    const file = e.target.files[0]; e.target.value = ""; if (!file) return;
+    const rows = parseCSV(await file.text());
+    if (rows.length < 2) { toast("That file has no data rows."); return; }
+    const map = mapHeaders(rows[0]);
+    if (map.m == null || map.date == null) { toast("Couldn't find the Date and Mastery columns. Check that the first row holds the column headers."); return; }
+    const stats = { pct: 0, converted: 0 };
+    const recs = rows.slice(1).map((c) => rowToRecord(c, map, stats)).filter((r) => r.date);
+    const existing = new Set(state.records.map(sig));
+    const dupes = recs.filter((r) => existing.has(sig(r))).length;
+    pendingImport = recs;
+    const flagged = recs.filter((r) => derive(r).flags.length).length;
+    $("#import-name").textContent = file.name;
+    $("#import-summary").textContent = recs.length + " assessment" + (recs.length === 1 ? "" : "s") + " found" +
+      (dupes ? ", " + dupes + " already in the dashboard (skipped when adding)" : "") + "." +
+      (stats.converted ? " " + stats.converted + " row" + (stats.converted === 1 ? " had" : "s had") + " counts formatted as percentages (for example 1700% = 17 students) and were read as counts." : "") +
+      (stats.pct ? " " + stats.pct + " row" + (stats.pct === 1 ? " uses" : "s use") + " true percentages." : "") +
+      (flagged ? " " + flagged + " row" + (flagged === 1 ? "" : "s") + " will be marked for a data check." : "");
+    $("#import-dialog").hidden = false;
+  });
+  function finishImport(replace) {
+    if (!pendingImport) return;
+    if (replace) state.records = pendingImport;
+    else { const ex = new Set(state.records.map(sig)); state.records.push(...pendingImport.filter((r) => !ex.has(sig(r)))); }
+    const count = pendingImport.length; pendingImport = null;
+    $("#import-dialog").hidden = true;
+    persist(); toast((replace ? "Replaced data with " : "Imported ") + count + " assessments");
+  }
+  $("#btn-import-append").addEventListener("click", () => finishImport(false));
+  $("#btn-import-replace").addEventListener("click", () => finishImport(true));
+  $("#btn-import-cancel").addEventListener("click", () => { pendingImport = null; $("#import-dialog").hidden = true; });
+
+  function download(name, blob) {
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+  const fileStem = () => ("Assessment Snapshot - " + titleFor(filtered().length ? filtered() : state.records)).replace(/[·]/g, "-").replace(/[\\/:*?"<>|]/g, "").replace(/\s+/g, " ").trim();
+  const today = () => new Date().toISOString().slice(0, 10);
+
+  $("#btn-export").addEventListener("click", () => {
+    const H = ["Course", "Period #", "Date of Assessment ", "Class Size", "Standard(s)", "Mastery (M) Number", "Near Mastery (NM) Number", "Remediation (R) Number", "Absent (A) Number", "IEPs", "Gifted", "ELLs", "Assessment Notes "];
+    const q = (v) => { v = String(v ?? ""); return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+    const md = (iso) => { const [y, m, d] = iso.split("-").map(Number); return m + "/" + d + "/" + y; };
+    const v = (r, x) => (r.mode === "pct" ? x + "%" : x);
+    const lines = [H.map(q).join(",")].concat(filtered().map((r) => [r.course, r.period, md(r.date), r.classSize, r.standards, v(r, r.m), v(r, r.nm), v(r, r.r), r.absent, r.iep, r.gifted, r.ell, r.notes].map(q).join(",")));
+    download(fileStem() + " - " + today() + ".csv", new Blob([lines.join("\r\n")], { type: "text/csv" }));
+    toast("Exported " + filtered().length + " assessments as CSV");
+  });
+
+  // ---------- Save dashboard (a copy of this file with the data inside) ----------
+  $("#btn-save").addEventListener("click", () => {
+    const json = JSON.stringify(state).replace(/</g, "\\u003c");
+    const start = TEMPLATE.indexOf(DATA_OPEN);
+    const end = TEMPLATE.indexOf(DATA_CLOSE, start);
+    if (start < 0 || end < 0) { toast("Couldn't build the saved file. Use Export CSV instead."); return; }
+    const html = TEMPLATE.slice(0, start + DATA_OPEN.length) + json + TEMPLATE.slice(end);
+    download(fileStem() + " - " + today() + ".html", new Blob([html], { type: "text/html" }));
+    fileDirty = false; $("#pill-file").hidden = true; $("#restore-note").hidden = true;
+    toast("Saved. Open the downloaded file to keep working from this point.", 5000);
+  });
+
+  // ---------- Clear ----------
+  $("#btn-clear").addEventListener("click", () => { $("#clear-confirm").hidden = false; $("#btn-clear").hidden = true; });
+  $("#btn-clear-no").addEventListener("click", () => { $("#clear-confirm").hidden = true; $("#btn-clear").hidden = false; });
+  $("#btn-clear-yes").addEventListener("click", () => { state.records = []; $("#clear-confirm").hidden = true; $("#btn-clear").hidden = false; persist(); toast("All assessments deleted"); });
+
+  // ---------- PDF ----------
+  $("#btn-pdf").addEventListener("click", () => {
+    if (!window.jspdf || !window.jspdf.jsPDF) { toast("The PDF tool needs an internet connection. Opening the print dialog instead; choose Save as PDF.", 5000); setTimeout(() => window.print(), 400); return; }
+    try { buildPdf(); } catch (err) { console.error(err); toast("PDF failed: " + err.message); }
+  });
+
+  function buildPdf() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: "pt", format: "letter" });
+    const PW = doc.internal.pageSize.getWidth(), PH = doc.internal.pageSize.getHeight(), M = 40, CW = PW - M * 2;
+    const recs = filtered(), t = totals(recs), stds = byStandard(recs);
+    const C = PRINT_COLORS;
+    const ink = [27, 34, 48], muted = [90, 100, 118];
+
+    doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(...muted);
+    doc.text("ASSESSMENT SNAPSHOT", M, M + 4);
+    doc.setFontSize(20); doc.setTextColor(...ink);
+    doc.text(titleFor(recs.length ? recs : state.records), M, M + 28);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9.5); doc.setTextColor(...muted);
+    const latest = recs[recs.length - 1];
+    doc.text(filterLabel() + "  ·  " + (recs.length ? fmtDate(recs[0].date) + " to " + fmtDate(latest.date) : "No assessments") + "  ·  Generated " + fmtDate(today()), M, M + 44);
+    if (latest) doc.text("Latest roster: " + n(latest.classSize) + " students · " + n(latest.iep) + " IEP · " + n(latest.gifted) + " gifted · " + n(latest.ell) + " ELL", M, M + 57);
+
+    // KPI boxes
+    let y = M + 72;
+    const kp = [["MASTERY RATE", pct(t.fm), Math.round(t.m) + " of " + Math.round(t.assessed) + " assessed"],
+      ["NEAR MASTERY / REMEDIATION", pct(t.fnm) + " / " + pct(t.fr), Math.round(t.nm) + " NM · " + Math.round(t.r) + " R"],
+      ["PRESENT ON ASSESSMENT DAYS", pct(t.attend), t.absent + " absences"],
+      ["STANDARDS ASSESSED", String(stds.length), recs.length + " assessments"]];
+    const gap = 8, kw = (CW - gap * 3) / 4, kh = 58;
+    kp.forEach((k, i) => {
+      const x = M + i * (kw + gap);
+      doc.setDrawColor(219, 224, 232); doc.setLineWidth(0.8); doc.roundedRect(x, y, kw, kh, 4, 4);
+      doc.setFont("helvetica", "bold"); doc.setFontSize(6.8); doc.setTextColor(...muted); doc.text(k[0], x + 9, y + 14);
+      doc.setFontSize(17); doc.setTextColor(...ink); doc.text(k[1], x + 9, y + 35);
+      doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(...muted); doc.text(k[2], x + 9, y + 49);
+    });
+    y += kh + 18;
+
+    // Legend
+    const legend = (yy) => {
+      let lx = M; doc.setFontSize(8);
+      [["Mastery", C.m], ["Near mastery", C.nm], ["Remediation", C.r]].forEach(([lbl, col]) => {
+        doc.setFillColor(col); doc.rect(lx, yy - 6, 7, 7, "F"); doc.setTextColor(...muted); doc.text(lbl, lx + 10, yy); lx += doc.getTextWidth(lbl) + 24;
+      });
+    };
+
+    // Chart 1
+    doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(...ink); doc.text("Results by assessment", M, y);
+    doc.setFont("helvetica", "normal"); legend(y + 14); y += 22;
+    const cv = document.createElement("canvas");
+    const c1h = 210;
+    drawTrend(cv, recs, C, CW, c1h, 3);
+    doc.addImage(cv.toDataURL("image/png"), "PNG", M, y, CW, c1h); y += c1h + 18;
+
+    // Chart 2
+    const s2h = Math.max(110, Math.min(260, stds.length * 34 + 30));
+    if (y + s2h + 30 > PH - M) { doc.addPage(); y = M + 10; }
+    doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(...ink); doc.text("Results by standard", M, y); y += 10;
+    const cv2 = document.createElement("canvas");
+    drawStd(cv2, stds, C, CW, s2h, 3);
+    doc.addImage(cv2.toDataURL("image/png"), "PNG", M, y, CW, s2h); y += s2h + 22;
+
+    // Log table
+    if (y + 80 > PH - M) { doc.addPage(); y = M + 10; }
+    doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(...ink); doc.text("Assessment log", M, y);
+    const body = recs.slice().reverse().map((r) => {
+      const d = derive(r); const cell = (raw, cnt) => (r.mode === "pct" ? n(raw) + "%" : String(cnt));
+      return [fmtDate(r.date), r.standards, d.size, d.absent, cell(r.m, d.m), cell(r.nm, d.nm), cell(r.r, d.r), pct(d.fm), n(r.iep), n(r.gifted), n(r.ell),
+        (r.notes || "") + (d.flags.length ? "\nData check: " + d.flags.join("; ") : "")];
+    });
+    doc.autoTable({
+      startY: y + 8, rowPageBreak: "avoid", margin: { left: M, right: M, bottom: M + 10 },
+      head: [["Date", "Standard(s)", "Class", "Abs", "M", "NM", "R", "Mastery", "IEP", "Gift.", "ELL", "Notes"]],
+      body,
+      styles: { font: "helvetica", fontSize: 7.6, cellPadding: 4, textColor: ink, lineColor: [219, 224, 232], lineWidth: 0.5, valign: "top" },
+      headStyles: { fillColor: [238, 241, 246], textColor: muted, fontStyle: "bold", fontSize: 7 },
+      columnStyles: { 0: { cellWidth: 58 }, 1: { cellWidth: 54, fontStyle: "bold" }, 2: { halign: "right", cellWidth: 28 }, 3: { halign: "right", cellWidth: 24 }, 4: { halign: "right", cellWidth: 26 }, 5: { halign: "right", cellWidth: 26 }, 6: { halign: "right", cellWidth: 24 }, 7: { halign: "right", cellWidth: 36, fontStyle: "bold" }, 8: { halign: "right", cellWidth: 22 }, 9: { halign: "right", cellWidth: 24 }, 10: { halign: "right", cellWidth: 22 }, 11: { cellWidth: "auto" } },
+      didParseCell: (data) => { if (data.section === "body" && data.column.index === 11 && /Data check:/.test(data.cell.raw)) data.cell.styles.textColor = [122, 82, 0]; }
+    });
+
+    // Footer on every page
+    const pages = doc.getNumberOfPages();
+    for (let i = 1; i <= pages; i++) {
+      doc.setPage(i); doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(...muted);
+      doc.text("Mastery rates use students assessed. Rows entered as percentages are converted to estimated counts for combined totals. Class-level data only.", M, PH - 22);
+      doc.text("Page " + i + " of " + pages, PW - M, PH - 22, { align: "right" });
+    }
+    doc.save(fileStem() + " - " + today() + ".pdf");
+    toast("PDF downloaded");
+  }
+
+  // ---------- Filters wiring ----------
+  ["#flt-course", "#flt-period", "#flt-std", "#flt-from", "#flt-to"].forEach((s) => $(s).addEventListener("change", render));
+  $("#btn-reset-filters").addEventListener("click", () => { ["#flt-course", "#flt-period", "#flt-std", "#flt-from", "#flt-to"].forEach((s) => ($(s).value = "")); render(); });
+
+  // Redraw charts on resize and theme change
+  let rz; new ResizeObserver(() => { clearTimeout(rz); rz = setTimeout(drawAll, 60); }).observe($("#wrap-trend"));
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", drawAll);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawAll);
+  window.addEventListener("beforeunload", (e) => { if (fileDirty && !canStore()) { e.preventDefault(); e.returnValue = ""; } });
+  function canStore() { try { localStorage.setItem("__t", "1"); localStorage.removeItem("__t"); return true; } catch (e) { return false; } }
+
+  loadInitial();
+  $("#pill-file").hidden = !fileDirty;
+  render();
+})();
+</script>
+</body>
+</html>
